@@ -1,0 +1,24 @@
+# Binaries and intermediate files
+target/
+debug/
+release/
+
+# Cargo-related files
+**/*.rs.bk      # Backup files from editors
+Cargo.lock      # Only ignore this in libraries, not binaries
+.cargo/
+
+# Rust's incremental compilation files
+**/incremental/
+**/deps/
+**/build/
+
+# Logs, temporary files, and editor settings
+*.log
+*.tmp
+*.swp
+*.swo
+.DS_Store
+.idea/
+.vscode/
+
