@@ -6,16 +6,12 @@ default-run = "main"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
+winit = "0.29"
+slint = "1.10.0"
+
+[build-dependencies]
+slint-build = "1.10.0" 
 
 [[bin]]
 name = "main"
 path = "src/main.rs"
-
-[[bin]]
-name = "server"
-path = "src/server.rs"
-
-[[bin]]
-name = "client"
-path = "src/client.rs"
-
