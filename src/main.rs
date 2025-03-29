@@ -16,7 +16,7 @@ pub struct Packet{ // u-> unsigned, no after that -> number of bits allocated to
 pub fn file_to_packets(file_path: &Path) -> Vec<Packet> { // file_path is a reference to the actual path, rust automatically dereferences the variable
     let mut file = File::open(file_path).expect("Failed to open file"); // hence we can just use that variable in open()
     let mut packets = Vec::new(); // dynamically sized array, allocated upon use
-    let mut buffer = [0; 8192]; // Fixed-size array instead of Vec, for the time being to make packets faster
+    let mut buffer = [0; 1024]; // Fixed-size array instead of Vec, for the time being to make packets faster
     let mut seq_num = 1;
     let file_name = file_path.file_name().unwrap().to_str().unwrap(); // making filetype from OsStr {what .file_name() reuturns} to &str
     let initial_packet = Packet{header:0x12345678ABCDEF00, 
@@ -55,10 +55,12 @@ pub fn file_to_packets(file_path: &Path) -> Vec<Packet> { // file_path is a refe
 fn packets_to_file(packets: Vec<Packet>) {
     let file_name = from_utf8(&packets[0].payload).unwrap();
     let mut file = File::create(file_name).expect("Failed to create file");
-
+    let mut num = 0;
     for packet in &packets[1..] { // starting the for loop from the seconds packet, (first is just file_name);
         file.write_all(&packet.payload).expect("Failed to write data");
+        num += 1;
     }
+    print!("{}",num);
 }
 
 
