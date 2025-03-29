@@ -6,13 +6,9 @@ default-run = "main"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
-slint = "1.10.0"
 rfd = "0.15.3"
 egui = "0.31.1"
 eframe = "0.31.1"
-
-[build-dependencies]
-slint-build = "1.10.0" 
 
 
 [[bin]]
