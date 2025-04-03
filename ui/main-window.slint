@@ -1,0 +1,9 @@
+import {Button, VerticalBox} from "std-widgets.slint";
+export component MainWindow inherits Window {
+    property <int> counter: 1;
+    VerticalBox {
+        Text {text: "hello world";}
+        Button {text: "yay"; clicked => {counter+=1;}}
+    }
+    
+}
