@@ -3,8 +3,11 @@ use std::io::{Write,Read};
 use std::path::Path;
 use rfd::FileDialog;
 use std::str::from_utf8;
-#[allow(dead_code)]
+use serde::{Serialize, Deserialize};
+use bincode;
 
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Packet{ // u-> unsigned, no after that -> number of bits allocated to integer
     header: u64, // 8-byte magic number or protocol version
     sno: u32,    // 4-byte integer, to keep track of order 
