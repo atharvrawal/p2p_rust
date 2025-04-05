@@ -5,8 +5,7 @@ use std::fs::File;
 use std::io::Read;
 use serde::{Serialize, Deserialize};
 use bincode;
-
-
+use rfd::FileDialog;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Packet {
@@ -66,6 +65,10 @@ pub fn file_to_packets(file_path: &Path) -> Vec<Packet> {
 
 #[tokio::main]
 async fn main() {
-    let file_path = Path::new("testfile.txt"); // Change file name
-    send_file(file_path, "192.168.1.100:12345").await.unwrap();
+    let file_path = FileDialog::new().pick_file();
+    if let Some(path) = file_path {
+        send_file(&path, "127.0.0.1:8080").await.unwrap();
+    } else {
+        println!("No file selected.");
+    }
 }

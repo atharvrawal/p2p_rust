@@ -8,13 +8,13 @@ use bincode;
 
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Packet{ // u-> unsigned, no after that -> number of bits allocated to integer
-    header: u64, // 8-byte magic number or protocol version
-    sno: u32,    // 4-byte integer, to keep track of order 
-    payload_length: u16, // 2-byte integer
-    checksum: u16, // used for data integrity, can be CRC16 or simple XOR checksum
-    payload: Vec<u8> // Dynamic array for containing file data, It is heap allocated
-}   
+pub struct Packet {         // u-> unsigned, no after that -> number of bits allocated to integer
+    header: u64,            // 8-byte magic number or protocol version
+    sno: u32,               // 4-byte integer, to keep track of order 
+    payload_length: u16,    // 2-byte integer
+    checksum: u16,          // used for data integrity, can be CRC16 or simple XOR checksum
+    payload: Vec<u8>        // Dynamic array for containing file data, It is heap allocated
+}
 
 pub fn file_to_packets(file_path: &Path) -> Vec<Packet> { // file_path is a reference to the actual path, rust automatically dereferences the variable
     let mut file = File::open(file_path).expect("Failed to open file"); // hence we can just use that variable in open()

@@ -1,9 +1,68 @@
-import {Button, VerticalBox} from "std-widgets.slint";
+import {Button, VerticalBox, GridBox, HorizontalBox, TextEdit, LineEdit} from "std-widgets.slint";
 export component MainWindow inherits Window {
-    property <int> counter: 1;
+    preferred-width: 600px;       
+    preferred-height: 400px;      
+       
+    property <bool> show_picker_page: false;
+    property <bool> show_reciver_page: false;
+    property <bool> show_sender_page: false;
+    property <bool> show_register_page: true;
+
+    icon: @image-url("icon.png");
+
+    VerticalLayout {
+        visible: show_register_page;
+        spacing: 20px;
+        padding: 20px;
+
+        Text {text: "Register as a Peer"; font-size: 48px; vertical-alignment: center; horizontal-alignment: center;}
+
+        VerticalBox { property <bool> show_password: false; property <image> pswd_icon: show_password ? @image-url("hide_pswd.png") : @image-url("show_pswd.png");
+            HorizontalBox {LineEdit {placeholder-text: "Username"; horizontal-alignment: left;} spacing: 0; padding: 0; max-height: 20px;}
+            HorizontalBox {LineEdit {placeholder-text: "Password"; horizontal-alignment: left; input-type: show_password ? text : password;} 
+                spacing: 5px; padding: 0; max-height: 20px; 
+                Button {icon: pswd_icon; clicked => {show_password = !show_password;}}
+            }
+        }
+        Button {text: "Register as a Peer to Recieve Files"; clicked => {show_picker_page = true; show_register_page = false;}}
+    } 
+
     VerticalBox {
-        Text {text: "hello world";}
-        Button {text: "yay"; clicked => {counter+=1;}}
+        visible: show_picker_page;
+        spacing: 20px;
+        padding: 20px;
+
+        GridLayout{
+            Button {icon: @image-url("back_icon.png"); row:0; col:0; clicked => {show_picker_page = false; show_register_page = true;}}
+            Text { text: "P2P File Sharing"; font-size: 48px; vertical-alignment: center; horizontal-alignment: center; row:0; col:0; colspan: 2; rowspan: 2;}
+        }
+
+        Button {text: "Send a File"; clicked => {show_picker_page = false; show_sender_page = true}}
+        Button {text: "Recieve a File"; clicked => {show_picker_page = false; show_reciver_page = true}}
     }
-    
+
+    VerticalBox {
+        visible: show_sender_page;
+        spacing: 20px;
+        padding: 20px;
+
+        GridLayout{
+            Button {icon: @image-url("back_icon.png"); row:0; col:0; clicked => {show_sender_page = false; show_picker_page = true;}}
+            Text { text: "Send File"; font-size: 48px; vertical-alignment: center; horizontal-alignment: center; row:0; col:0; colspan: 2; rowspan: 2;}
+        }
+
+    }
+
+    VerticalBox {
+        visible: show_reciver_page;
+        spacing: 20px;
+        padding: 20px;
+
+        GridLayout{
+            Button {icon: @image-url("back_icon.png"); row:0; col:0; clicked => {show_reciver_page = false; show_picker_page = true;}}
+            Text { text: "Recieve File"; font-size: 48px; vertical-alignment: center; horizontal-alignment: center; row:0; col:0; colspan: 2; rowspan: 2;}
+        }
+    }
+
+
 }
