@@ -8,36 +8,31 @@ use bincode;
 
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Packet {         // u-> unsigned, no after that -> number of bits allocated to integer
-    header: u64,            // 8-byte magic number or protocol version
-    sno: u32,               // 4-byte integer, to keep track of order 
-    payload_length: u16,    // 2-byte integer
-    checksum: u16,          // used for data integrity, can be CRC16 or simple XOR checksum
-    payload: Vec<u8>        // Dynamic array for containing file data, It is heap allocated
+pub struct Packet {             // u-> unsigned, no after that -> number of bits allocated to integer
+    pub header: u64,            // 8-byte magic number or protocol version
+    pub sno: u32,               // 4-byte integer, to keep track of order 
+    pub payload_length: u16,    // 2-byte integer
+    pub checksum: u16,          // used for data integrity, can be CRC16 or simple XOR checksum
+    pub payload: Vec<u8>        // Dynamic array for containing file data, It is heap allocated
 }
+
 
 pub fn file_to_packets(file_path: &Path) -> Vec<Packet> { // file_path is a reference to the actual path, rust automatically dereferences the variable
     let mut file = File::open(file_path).expect("Failed to open file"); // hence we can just use that variable in open()
+    let file_size = file.metadata().expect("Failed to get metadata").len();
     let mut packets = Vec::new(); // dynamically sized array, allocated upon use
     let mut buffer = [0; 1024]; // Fixed-size array instead of Vec, for the time being to make packets faster
     let mut seq_num = 1;
     let file_name = file_path.file_name().unwrap().to_str().unwrap(); // making filetype from OsStr {what .file_name() reuturns} to &str
     let initial_packet = Packet{header:0x12345678ABCDEF00, 
                                         sno: 0, 
-                                        payload_length: (file_name.len() as u16),
+                                        payload_length: (file_size as u16),
                                         checksum: 0, 
                                         payload: file_name.as_bytes().to_vec()};
     packets.push(initial_packet);
 
     while let Ok(bytes_read) = file.read(&mut buffer) {
         if bytes_read == 0 {
-            packets.push(Packet {
-                header: 0x12345678ABCDEF00,
-                sno: seq_num,
-                payload_length: 0,
-                checksum: 0,
-                payload: buffer[..bytes_read].to_vec(),
-            });
             break;
         }
 
@@ -71,6 +66,12 @@ fn main(){
     if let Some(path) = FileDialog::new().pick_file(){  
         let packets = file_to_packets(&path); // Path is a struct, hence we give the function pointer to path
         packets_to_file(packets); // to make sure variable remains of static size
+        let file = File::open(path).expect("Failed to open file"); // hence we can just use that variable in open() 
+        let file_size = file.metadata().expect("Failed to get metadata").len();
+        let mut no_of_packets = file_size/1024;
+
+        if file_size % 1024 != 0{no_of_packets+=1;}
+        print!("{}", no_of_packets);
     }
 }
 

@@ -8,9 +8,17 @@ export component MainWindow inherits Window {
     property <bool> show_sender_page: false;
     property <bool> show_register_page: true;
 
+    callback tick();
+    callback file_picker() -> string;
+    callback register() -> string;
+
+    property <string> file_name;
+    property <string> public_ip;
+    property <string> server_ip : "54.66.23.75";
+
     icon: @image-url("icon.png");
 
-    VerticalLayout {
+    VerticalLayout { // Register Page
         visible: show_register_page;
         spacing: 20px;
         padding: 20px;
@@ -24,10 +32,10 @@ export component MainWindow inherits Window {
                 Button {icon: pswd_icon; clicked => {show_password = !show_password;}}
             }
         }
-        Button {text: "Register as a Peer to Recieve Files"; clicked => {show_picker_page = true; show_register_page = false;}}
+        Button {text: "Register as a Peer to Recieve Files"; clicked => {public_ip = register(); show_picker_page = true; show_register_page = false;}}
     } 
 
-    VerticalBox {
+    VerticalBox { // Picker Page
         visible: show_picker_page;
         spacing: 20px;
         padding: 20px;
@@ -41,7 +49,7 @@ export component MainWindow inherits Window {
         Button {text: "Recieve a File"; clicked => {show_picker_page = false; show_reciver_page = true}}
     }
 
-    VerticalBox {
+    VerticalBox { // Sender Page
         visible: show_sender_page;
         spacing: 20px;
         padding: 20px;
@@ -51,9 +59,14 @@ export component MainWindow inherits Window {
             Text { text: "Send File"; font-size: 48px; vertical-alignment: center; horizontal-alignment: center; row:0; col:0; colspan: 2; rowspan: 2;}
         }
 
+        LineEdit {placeholder-text: "Reciver Username"; horizontal-alignment: left; max-height: 20px;}
+        Button {text: "File Picker"; clicked => {root.file_name = file_picker();}}
+        Text {text: "";}
+
+
     }
 
-    VerticalBox {
+    VerticalBox { // Reciver Page
         visible: show_reciver_page;
         spacing: 20px;
         padding: 20px;

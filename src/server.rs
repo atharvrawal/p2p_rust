@@ -1,13 +1,13 @@
-use tokio::net::TcpStream;
-use tokio::io::AsyncWriteExt;
+use tokio::net::UdpSocket;
 use std::path::Path;
 use std::fs::File;
 use std::io::Read;
 use serde::{Serialize, Deserialize};
 use bincode;
 use rfd::FileDialog;
+use crc16::*;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]  // Added Clone
 pub struct Packet {
     pub header: u64,
     pub sno: u32,
@@ -16,17 +16,18 @@ pub struct Packet {
     pub payload: Vec<u8>,
 }
 
-pub async fn send_file(file_path: &Path, server_ip: &str) -> tokio::io::Result<()> {
-    let mut stream = TcpStream::connect(server_ip).await?;
-    let packets = file_to_packets(file_path);
+pub async fn send_file_udp(file_path: &Path, server_addr: &str) -> tokio::io::Result<()> {
+    let socket = UdpSocket::bind("0.0.0.0:0").await?;
+    socket.connect(server_addr).await?;
 
+    let packets = file_to_packets(file_path);
     for packet in packets {
-        let encoded: Vec<u8> = bincode::serialize(&packet).unwrap();
-        stream.write_all(&(encoded.len() as u32).to_be_bytes()).await?; // Send packet size first
-        stream.write_all(&encoded).await?; // Send packet data
+        let encoded = bincode::serialize(&packet).unwrap();
+        socket.send(&encoded).await?;
+        tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
     }
 
-    println!("File sent successfully.");
+    println!("File sent via UDP.");
     Ok(())
 }
 
@@ -41,33 +42,39 @@ pub fn file_to_packets(file_path: &Path) -> Vec<Packet> {
         header: 0x12345678ABCDEF00,
         sno: 0,
         payload_length: file_name.len() as u16,
-        checksum: 0,
+        checksum: calculate_checksum(file_name.as_bytes()),
         payload: file_name.as_bytes().to_vec(),
     };
     packets.push(initial_packet);
 
     while let Ok(bytes_read) = file.read(&mut buffer) {
-        if bytes_read == 0 {
-            break;
-        }
-        packets.push(Packet {
+
+        println!("Read {} bytes from file", bytes_read);
+        if bytes_read == 0 { break; }
+
+        let packet = Packet {
             header: 0x12345678ABCDEF00,
             sno: seq_num,
             payload_length: bytes_read as u16,
-            checksum: 0, // Implement checksum if needed
+            checksum: calculate_checksum(&buffer[..bytes_read]),
             payload: buffer[..bytes_read].to_vec(),
-        });
+        };
+        packets.push(packet);
         seq_num += 1;
     }
 
     packets
 }
 
+fn calculate_checksum(data: &[u8]) -> u16 {
+    State::<ARC>::calculate(data)
+}
+
 #[tokio::main]
 async fn main() {
     let file_path = FileDialog::new().pick_file();
     if let Some(path) = file_path {
-        send_file(&path, "127.0.0.1:8080").await.unwrap();
+        send_file_udp(&path, "127.0.0.1:8080").await.unwrap(); // Replace with server's IP
     } else {
         println!("No file selected.");
     }
