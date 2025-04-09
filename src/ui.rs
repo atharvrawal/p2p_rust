@@ -15,7 +15,7 @@ mod test;
 use test2::get_pipp;
 use test2::send_register_payload;
 use test2::get_client;
-use test::send_function;
+use test::{send_file_udp, send_function};
 use test2::get_pip_from_json;
 
 
@@ -79,14 +79,17 @@ async fn main(){
             let app_weak = weak_app_target.clone();
             let username = username.to_string();
             slint::spawn_local(async move {
-                let response = send(username).await.unwrap();
-                let pip = get_pip_from_json(response).unwrap();
-                send_function(pip);
+                let response = get_pipp(username);
+                print_json(&response);
+                let pip = get_pip_from_json(&response).unwrap();
+                let file_path = FileDialog::new().pick_file().unwrap();
+                let server_addr_string = format!("{}:8080", pip);
+                let server_addr: &str = &server_addr_string;
+                send_file_udp(&file_path, server_addr).await.unwrap();
                 io::stdout().flush().unwrap();
             }).unwrap();
     });
     
-
 
     app.on_file_picker(|| {
         if let Some(path) = FileDialog::new().pick_file() {

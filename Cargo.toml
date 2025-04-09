@@ -20,6 +20,7 @@ tungstenite="0.20"
 stunclient = "0.4"
 rand = "0.8"
 url = "2.5.4"
+local-ip-address = "0.5"
 
 [build-dependencies]
 slint-build = "1.10.0"

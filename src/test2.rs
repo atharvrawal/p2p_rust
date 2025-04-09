@@ -74,12 +74,18 @@ pub async fn get_client() -> Vec<String> {
 }
 
 
-use serde_json::Value;
 
 pub fn get_pip_from_json(data: &Value) -> Option<String> {
     data.get("pip")?.as_str().map(|s| s.to_string())
 }
 
+pub fn get_local_ip() -> Option<String> {
+
+    // Trick: connect to an unreachable IP to get the local interface IP
+    let socket = UdpSocket::bind("0.0.0.0:0").ok()?;
+    socket.connect("8.8.8.8:80").ok()?; // Doesn't actually send data
+    Some(socket.local_addr().ok()?.ip().to_string())
+}
 
 pub fn get_pipp(username: String) -> Value {
     // Discover STUN server
@@ -97,13 +103,7 @@ pub fn get_pipp(username: String) -> Value {
 
     // Get the private IP by connecting to stun and checking local_addr
     socket.connect(stun_addr).expect("Failed to connect to STUN server");
-    let local_ip = match socket.local_addr() {
-        Ok(addr) => match addr.ip() {
-            IpAddr::V4(ipv4) => ipv4.to_string(),
-            IpAddr::V6(_) => "unknown".to_string(),
-        },
-        Err(_) => "unknown".to_string(),
-    };
+    let local_ip = get_local_ip().unwrap();
 
     // STUN binding request
     let mut transaction_id = [0u8; 12];

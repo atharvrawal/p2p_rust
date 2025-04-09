@@ -25,6 +25,7 @@ fn calculate_checksum(data: &[u8]) -> u16 {
 // ... [imports and Packet struct unchanged]
 
 
+
 pub async fn send_file_udp(file_path: &Path, server_addr: &str) -> tokio::io::Result<()> {
     let socket = UdpSocket::bind("0.0.0.0:0").await?;
     socket.connect(server_addr).await?;
@@ -104,7 +105,8 @@ pub async fn send_function(pip:String) {
 
     match file_path {
         Some(path) => {
-            let server_addr = format!("{}:8080",pip).as_str(); 
+            let server_addr_string = format!("{}:8080", pip);
+            let server_addr: &str = &server_addr_string;
             match send_file_udp(&path, server_addr).await {
                 Ok(_) => println!("🎉 File transfer completed successfully."),
                 Err(e) => eprintln!("❌ Error during file transfer: {}", e),
