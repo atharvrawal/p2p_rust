@@ -71,7 +71,7 @@ export component MainWindow inherits Window {
                         ComboBox { max-height: 18px; model: root.available_clients; selected(current-value) => {selected_client = self.current-value}}}
         
         Button {text: "File Picker"; clicked => {root.file_name = file_picker();}}
-        Button {text: "Send"; clicked => {get_target_info(selected_client);}}
+        Button {text: "Send"; clicked => {send(selected_client);}}
         Rectangle{ProgressIndicator {progress: 50%; width: parent.width; height: parent.height;} 
             Text {text: "50% Done"; horizontal-alignment: center; vertical-alignment: center; color: darkgreen;}
             max-height: 20px;}
