@@ -15,13 +15,13 @@ pub struct Packet {
     pub payload: Vec<u8>,
 }
 
-#[tokio::main]
+#[tokio::main]  
 async fn main() -> tokio::io::Result<()> {
-    let socket = UdpSocket::bind("127.0.0.1:8080").await?;
+    let socket = UdpSocket::bind("192.168.190.217:12345").await?;
     println!("UDP server waiting for packets...");
 
     let mut packets = Vec::new();
-    let mut buf = [0u8; 1024];
+    let mut buf = [0u8; 1048];
 
     loop {
         let (len, _) = socket.recv_from(&mut buf).await?;
@@ -50,7 +50,12 @@ async fn main() -> tokio::io::Result<()> {
 
 fn packets_to_file(mut packets: Vec<Packet>) {
     let file_name = from_utf8(&packets[0].payload).unwrap();
-    let mut file = File::create(file_name).expect("Failed to create file");
+    let sanitized_filename: String = file_name
+    .chars()
+    .filter(|c| !"<>:\"/\\|?*".contains(*c))
+    .collect();
+
+    let mut file = File::create(sanitized_filename).unwrap();
     println!("Total packets received: {}", packets.len());
     for p in &packets {
         println!("Packet {}: {} bytes", p.sno, p.payload_length);
