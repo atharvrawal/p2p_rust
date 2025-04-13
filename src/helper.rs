@@ -5,6 +5,8 @@ use tokio_tungstenite::{connect_async, tungstenite::Message};
 use futures_util::{SinkExt, StreamExt};
 use url::Url;
 use tokio::runtime::Runtime;
+use local_ip_address::list_afinet_netifas;
+use get_if_addrs::{get_if_addrs, IfAddr};
 
 
 pub async fn get_target_info(username: String) -> Option<Value> {
@@ -79,12 +81,17 @@ pub fn get_pip_from_json(data: &Value) -> Option<String> {
     data.get("pip")?.as_str().map(|s| s.to_string())
 }
 
-pub fn get_local_ip() -> Option<String> {
-
-    // Trick: connect to an unreachable IP to get the local interface IP
-    let socket = UdpSocket::bind("0.0.0.0:0").ok()?;
-    socket.connect("8.8.8.8:80").ok()?; // Doesn't actually send data
-    Some(socket.local_addr().ok()?.ip().to_string())
+fn get_wifi_ip() -> String {
+    if let Ok(ifaces) = get_if_addrs() {
+        for iface in ifaces {
+            if iface.name.contains("Wi-Fi") || iface.name.contains("wlan") {
+                if let IfAddr::V4(ipv4) = iface.addr {
+                    return ipv4.ip.to_string();
+                }
+            }
+        }
+    }
+    "Wi-Fi IP not found".to_string()
 }
 
 pub fn get_pipp(username: String) -> Value {
@@ -103,7 +110,7 @@ pub fn get_pipp(username: String) -> Value {
 
     // Get the private IP by connecting to stun and checking local_addr
     socket.connect(stun_addr).expect("Failed to connect to STUN server");
-    let local_ip = get_local_ip().unwrap();
+    let local_ip = get_wifi_ip();
 
     // STUN binding request
     let mut transaction_id = [0u8; 12];
@@ -157,6 +164,7 @@ pub fn get_pipp(username: String) -> Value {
         "pip": local_ip
     })
 }
+
 pub async fn send_register_payload(data: Value) {
     let url = Url::parse("ws://54.66.23.75:8765").expect("Invalid WS URL");
     let (ws_stream, _) = connect_async(url)
@@ -177,4 +185,23 @@ pub async fn send_register_payload(data: Value) {
 
 #[tokio::main]
 async fn main() {
+}
+
+pub fn print_json(value: &Value) {
+    match value {
+        Value::Object(map) => {
+            for (k, v) in map {
+                println!("Key: {}", k);
+                print_json(v);
+            }
+        }
+        Value::Array(arr) => {
+            for v in arr {
+                print_json(v);
+            }
+        }
+        _ => {
+            println!("Value: {}", value);
+        }
+    }
 }

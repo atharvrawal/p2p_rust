@@ -10,13 +10,13 @@ use serde_json::json;
 use futures_util::{StreamExt, SinkExt};
 use tokio::runtime::Runtime;
 use serde_json::{Value};
-mod test2;
+mod helper;
 mod test;
-use test2::get_pipp;
-use test2::send_register_payload;
-use test2::get_client;
+use helper::get_pipp;
+use helper::send_register_payload;
+use helper::get_client;
 use test::{send_file_udp, send_function};
-use test2::get_pip_from_json;
+use helper::get_pip_from_json;
 
 
 fn print_json(value: &Value) {
@@ -40,6 +40,7 @@ fn print_json(value: &Value) {
 
 #[tokio::main]
 async fn main(){
+    
     let app = MainWindow::new().unwrap();
     let app_weak = app.as_weak();
     

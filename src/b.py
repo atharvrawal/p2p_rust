@@ -7,3 +7,4 @@ def get_public_ip():
     print(f"NAT Type: {nat_type}")
 
 get_public_ip()
+

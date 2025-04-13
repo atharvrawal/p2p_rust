@@ -21,42 +21,65 @@ stunclient = "0.4"
 rand = "0.8"
 url = "2.5.4"
 local-ip-address = "0.5"
+get_if_addrs = "0.5"
+pnet = "0.34.0"
+
 
 [build-dependencies]
 slint-build = "1.10.0"
+
+[[bin]]
+name = "get_ipv4"
+path = "src/get_ipv4.rs"
+
+[[bin]]
+name = "get_ipv6"
+path = "src/get_ipv6.rs"
+
+[[bin]]
+name = "get_pip_port_keepalive"
+path = "src/get_pip_port_keepalive.rs"
+
+[[bin]]
+name = "helper"
+path = "src/helper.rs"
 
 [[bin]]
 name = "main"
 path = "src/main.rs"
 
 [[bin]]
-name = "server"
-path = "src/server.rs"
+name = "receiver_ipv6"
+path = "src/receiver_ipv6.rs"
 
 [[bin]]
-name = "ui"
-path = "src/ui.rs"
-
-[[bin]]
-name = "client"
-path = "src/client.rs"
-
-[[bin]]
-name = "receiver"
-path = "src/receiver.rs"
+name = "sender_ipv6"
+path = "src/sender_ipv6.rs"
 
 [[bin]]
 name = "sender"
 path = "src/sender.rs"
 
 [[bin]]
+name = "server"
+path = "src/server.rs"
+
+[[bin]]
 name = "test"
 path = "src/test.rs"
 
 [[bin]]
-name = "test2"
-path = "src/test2.rs"
+name = "ui"
+path = "src/ui.rs"
 
 [[bin]]
-name = "test3"
-path = "src/test3.rs"
+name = "tcp_sender_v6"
+path = "src/tcp_sender_v6.rs"
+
+[[bin]]
+name = "tcp_receiver_v6"
+path = "src/tcp_receiver_v6.rs"
+
+[[bin]]
+name = "test_ui"
+path = "src/test_ui.rs"
