@@ -23,6 +23,7 @@ url = "2.5.4"
 local-ip-address = "0.5"
 get_if_addrs = "0.5"
 pnet = "0.34.0"
+anyhow = "1"
 
 
 [build-dependencies]
@@ -83,3 +84,15 @@ path = "src/tcp_receiver_v6.rs"
 [[bin]]
 name = "test_ui"
 path = "src/test_ui.rs"
+
+[[bin]]
+name = "get_ipv6_onefunc"
+path = "src/get_ipv6_onefunc.rs"
+
+[[bin]]
+name = "true_test"
+path = "src/true_test.rs"
+
+[[bin]]
+name = "testtt"
+path = "src/testtt.rs"

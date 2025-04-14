@@ -1,4 +1,4 @@
-import {Button, VerticalBox, GridBox, HorizontalBox, TextEdit, LineEdit, ComboBox, ProgressIndicator} from "std-widgets.slint";
+import {Button, VerticalBox, GridBox, HorizontalBox, TextEdit, LineEdit, ComboBox, ProgressIndicator, ListView} from "std-widgets.slint";
 export component TestWindow inherits Window {
     preferred-width: 600px; preferred-height: 400px; icon: @image-url("icon.png");
        
@@ -6,34 +6,31 @@ export component TestWindow inherits Window {
     property <bool> show_reciver_page: false;
     property <bool> show_sender_page: false;
     property <bool> show_register_page: true;
-    in property <[string]> available_clients;
+    in property <[string]> available_clients :["hello", "bye"];
     in property <string> output;
 
     callback tick();
     callback file_picker() -> string;
     callback register(string, string);
     callback get_clients();
-    callback send(string);
+    callback send(string, string);
 
-    property <string> file_name;
-    property <string> username;
-    property <string> pswd;
-    property <string> public_ip;
-    property <string> server_ip : "54.66.23.75";
+    property <string> file_name; property <string> username; property <string> pswd; property <string> target_username;
     
 
     VerticalLayout { // Register Page
         visible: show_register_page; spacing: 20px; padding: 20px;
-
+        
         Text {text: "Register as a Peer"; font-size: 48px; vertical-alignment: center; horizontal-alignment: center;}
         VerticalBox { property <bool> show_password: false; property <image> pswd_icon: show_password ? @image-url("hide_pswd.png") : @image-url("show_pswd.png");
             HorizontalBox {LineEdit {text <=> root.username; placeholder-text: "Username"; horizontal-alignment: left;} spacing: 0; padding: 0; max-height: 20px;}
             HorizontalBox {LineEdit {text <=> root.pswd; placeholder-text: "Password"; horizontal-alignment: left; input-type: show_password ? text : password;} 
                 spacing: 5px; padding: 0; max-height: 20px; 
-                Button {icon: pswd_icon; clicked => {show_password = !show_password;}}
-            }
+                Button {icon: pswd_icon; clicked => {show_password = !show_password;}}}
         }
-        Button {text: "Register as a Peer to Recieve Files"; clicked => {register(username, pswd); show_picker_page = true; show_register_page = false;}} 
+
+        Button {text: "Register as a Peer to Recieve Files"; enabled: root.username != "" && root.pswd != "";
+                clicked => {register(username, pswd); show_picker_page = true; show_register_page = false;}}
     } 
 
     VerticalBox { // Picker Page
@@ -43,7 +40,7 @@ export component TestWindow inherits Window {
 
         GridLayout{
             Button {icon: @image-url("back_icon.png"); row:0; col:0; clicked => {show_picker_page = false; show_register_page = true;}}
-            Text { text: output; font-size: 48px; vertical-alignment: center; horizontal-alignment: center; row:0; col:0; colspan: 2; rowspan: 2;}
+            Text { text: "P2P File Sharing"; font-size: 48px; vertical-alignment: center; horizontal-alignment: center; row:0; col:0; colspan: 2; rowspan: 2;}
         }
 
         Button {text: "Send a File"; clicked => {show_picker_page = false; show_sender_page = true; get_clients();}}
@@ -60,14 +57,15 @@ export component TestWindow inherits Window {
 
         GridLayout{
             Button {icon: @image-url("back_icon.png"); row:0; col:0; clicked => {show_sender_page = false; show_picker_page = true;}}
-            Text { text: "Pick Reciver"; font-size: 48px; vertical-alignment: center; horizontal-alignment: center; row:0; col:0; colspan: 2; rowspan: 2;}
+            Text { text: "Pick Receiver"; font-size: 48px; vertical-alignment: center; horizontal-alignment: center; row:0; col:0; colspan: 2; rowspan: 2;}
         }
 
         HorizontalBox {Text{text:"Available Users:"; horizontal-alignment: center; vertical-alignment: center; font-size: 12px;} 
-                        ComboBox { max-height: 18px; model: root.available_clients; selected(current-value) => {selected_client = self.current-value}}}
+                        ComboBox { max-height: 18px; model: root.available_clients; selected(value)=>{root.target_username = value}}}
+    
         
         Button {text: "File Picker"; clicked => {root.file_name = file_picker();}}
-        Button {text: "Send"; clicked => {}} //send(selected_client);
+        Button {text: "Send"; clicked => {send(username, target_username)}} 
         Rectangle{ProgressIndicator {progress: 50%; width: parent.width; height: parent.height;} 
             Text {text: "50% Done"; horizontal-alignment: center; vertical-alignment: center; color: darkgreen;}
             max-height: 20px;}

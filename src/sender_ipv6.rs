@@ -1,11 +1,24 @@
-use std::net::UdpSocket;
+// sender.rs
+use tokio::net::TcpStream;
+use tokio::io::AsyncWriteExt;
+use serde_json::{Value,json};
 
-fn main() {
-    let target = "[2401:4900:8838:54da:5d7e:74b8:4a01:e4c2]:42070";
+pub async fn send_json_value(json_value: &Value) -> tokio::io::Result<()> {
+    let mut stream = TcpStream::connect("54.66.23.75:8765").await?;
+    let mut json_str = serde_json::to_string(json_value)?;
+    json_str.push('\n'); // Important: server expects newline   
+    stream.write_all(json_str.as_bytes()).await?;
+    Ok(())
+}
 
-    // Bind to any local IPv6 address and OS-assigned port
-    let socket = UdpSocket::bind("[::]:0").expect("Failed to bind");
+#[tokio::main]
+async fn main() {
+    let data = json!({
+        "type": "register",
+        "msg": "Hello from Rust!"
+    });
 
-    socket.send_to(b"hello", target).expect("Failed to send");
-    println!("✅ Sent 'hello' to {}", target);
+    if let Err(e) = send_json_value(&data).await {
+        eprintln!("Error sending JSON: {}", e);
+    }
 }

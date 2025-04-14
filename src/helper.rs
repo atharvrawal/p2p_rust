@@ -1,12 +1,17 @@
 use rand::RngCore;
 use serde_json::{json, Value};
+use slint::SharedString;
 use std::net::{ToSocketAddrs, UdpSocket, IpAddr};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 use futures_util::{SinkExt, StreamExt};
 use url::Url;
+use stunclient::StunClient;
 use tokio::runtime::Runtime;
 use local_ip_address::list_afinet_netifas;
 use get_if_addrs::{get_if_addrs, IfAddr};
+use tokio::net::TcpStream;
+use tokio::io::AsyncWriteExt;
+use std::error::Error;
 
 
 pub async fn get_target_info(username: String) -> Option<Value> {
@@ -204,4 +209,93 @@ pub fn print_json(value: &Value) {
             println!("Value: {}", value);
         }
     }
+}
+
+pub fn get_pip_port_json(username:&str, password:&str) -> serde_json::Value {
+    let mut ipv4_ip = None;let mut ipv4_port = None;let mut ipv6_ip = None;let mut ipv6_port = None;
+    let stun_hostname = "stun.l.google.com:19302"; 
+
+    if let Some(stun_ipv4) = stun_hostname.to_socket_addrs().ok().unwrap().find(|a| a.is_ipv4()) {
+        if let Ok(socket_v4) = UdpSocket::bind("0.0.0.0:42069") {
+            let client_v4 = StunClient::new(stun_ipv4);
+            if let Ok(addr) = client_v4.query_external_address(&socket_v4) {
+                ipv4_ip = Some(addr.ip().to_string());
+                ipv4_port = Some(addr.port());
+            }
+        }
+    }
+
+    if let Some(stun_ipv6) = stun_hostname.to_socket_addrs().ok().unwrap().find(|a| a.is_ipv6()) {
+        if let Ok(socket_v6) = UdpSocket::bind("[::]:42070") {
+            let client_v6 = StunClient::new(stun_ipv6);
+            if let Ok(addr) = client_v6.query_external_address(&socket_v6) {
+                ipv6_ip = Some(addr.ip().to_string());
+                ipv6_port = Some(addr.port());
+            }
+        }
+    }
+    json!({"type" : "register","username":username,"password": password,"ipv4_ip": ipv4_ip,"ipv4_port": ipv4_port, "ipv6_ip": ipv6_ip,"ipv6_port": ipv6_port})
+}
+
+
+pub async fn send_json_value(json_value: &Value) -> tokio::io::Result<()>{
+    let url = Url::parse("ws://54.66.23.75:8765").unwrap();
+    let json_str = serde_json::to_string(json_value)?;
+    let (mut ws_stream, _) = connect_async(url).await.unwrap();
+    ws_stream.send(Message::Text(json_str)).await.unwrap();
+    Ok(())
+}
+
+pub async fn get_clients() -> Result<String, Box<dyn Error>> {
+    let url = Url::parse("ws://54.66.23.75:8765")?;
+    let (mut ws_stream, _) = connect_async(url).await?;
+
+    let json_str = r#"{"type": "get_users"}"#.to_string();
+    ws_stream.send(Message::Text(json_str)).await?;
+
+    if let Some(msg) = ws_stream.next().await {
+        match msg? {
+            Message::Text(text) => Ok(text),
+            Message::Binary(bin) => Ok(String::from_utf8(bin)?),
+            _ => Err("Unexpected message type".into()),
+        }
+    } else {
+        Err("No response from server".into())
+    }
+}
+
+
+// pub async fn get_users(){
+//     let url = Url::parse("ws://54.66.23.75:9876").unwrap();
+//     let json_str = r#"{"type": "get_users"}"#.to_string();
+//     let (mut ws_stream, _) = connect_async(url).await.unwrap();
+//     ws_stream.send(Message::Text(json_str)).await.unwrap();
+
+// }
+
+// pub async fn send_json(json_data: &str) -> Result<String, Box<dyn Error>> {
+//     let mut stream = TcpStream::connect("54.66.23.75:8765").await?;
+
+//     // Send JSON
+//     stream.write_all((json_data.to_string() + "\n").as_bytes()).await?;
+//     stream.flush().await?;
+
+//     // Read response (up to 8KB, adjust if needed)
+//     let mut buffer = vec![0u8; 8192];
+//     let n = stream.read(&mut buffer).await?;
+
+//     let response = String::from_utf8(buffer[..n].to_vec())?;
+//     Ok(response)
+// }
+
+pub fn keys_from_json_str(json_str: String) -> Vec<String>{
+    let _json: Value = serde_json::from_str(json_str.as_str()).unwrap();
+    print!("{}",json_str);
+    let mut usernames: Vec<String> = Vec::new();
+    if let Value::Object(map) = _json {
+        for (key, value) in map.iter() {
+            usernames.push(key.clone());
+        }
+    }
+    usernames
 }
