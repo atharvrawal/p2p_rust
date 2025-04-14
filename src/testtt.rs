@@ -29,7 +29,6 @@ struct RelayStatusResponse {
     initiator: Option<String>,
 }
 
-#[tokio::main]
 pub async fn relay_send(target_username: String, username: String) -> Result<(), Box<dyn std::error::Error>> {
     // Connect to the signaling server
     let server_url = "ws://54.66.23.75:9876"; // Replace with your server address

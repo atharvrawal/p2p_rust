@@ -16,10 +16,6 @@ use tokio::io::AsyncWriteExt;
 use tokio::io::AsyncReadExt;
 mod testtt;
 use testtt::relay_send;
-use tokio_tungstenite::connect_async;
-use tokio_tungstenite::tungstenite::protocol::Message;
-use tokio::sync::Mutex;
-use std::sync::Arc;
 
 fn process_input_json(input: SharedString) {
     let input_str = input.as_str();
@@ -38,29 +34,17 @@ fn process_input_json(input: SharedString) {
 
 #[tokio::main]
 async fn main(){
-    let (ws_stream, _) = connect_async("ws://54.66.23.75:8765").await.expect("Failed to connect");
-    let ws_stream = Arc::new(Mutex::new(ws_stream));
     let app = TestWindow::new().unwrap(); 
     let app_weak = app.as_weak();
     
     // Register event handler
     let weak_app_register = app.as_weak();
-    let ws_stream_clone_register = ws_stream.clone();
     app.on_register(move |username: SharedString, password: SharedString| {
         let app_weak = weak_app_register.clone();
-        let ws_stream = ws_stream_clone_register.clone();
-        
-        // Use async block directly
-        let _ = slint::spawn_local(async move {
+        task::block_in_place(move || {
             let pip_port_json = get_pip_port_json(username.as_str(), password.as_str());
             let pip_port_string = serde_json::to_string(&pip_port_json).unwrap();
-            
-            // Send JSON asynchronously
-            if let Err(e) = send_json_value(&pip_port_json, ws_stream).await {
-                eprintln!("Error sending JSON: {}", e);
-            }
-
-            // Update UI output
+            let _ = tokio::runtime::Runtime::new().unwrap().block_on(async {send_json_value(&pip_port_json).await});
             if let Some(app_strong) = app_weak.upgrade() {
                 app_strong.set_output(SharedString::from(pip_port_string));
             }
@@ -69,12 +53,10 @@ async fn main(){
 
     // Get clients event handler
     let weak_app_clients = app.as_weak();
-    let ws_stream_clone_get_clients = ws_stream.clone();
     app.on_get_clients(move || {
         let app_weak = weak_app_clients.clone(); 
-        let ws_stream = ws_stream_clone_get_clients.clone();
         slint::spawn_local(async move {
-            let response = get_clients(ws_stream).await;
+            let response = get_clients().await;
             let clients = keys_from_json_str(response.unwrap());
             println!("{:?}", clients);
             let model = ModelRc::new(VecModel::from(clients.into_iter().map(Into::into).collect::<Vec<_>>(),));
@@ -90,7 +72,7 @@ async fn main(){
             let username = username.to_string();
             slint::spawn_local(async move {
                 // Call relay_send asynchronously
-                if let Err(e) = relay_send(target_username.to_string(), username.to_string()).await {
+                if let Err(e) = relay_send(target_username, username).await {
                     eprintln!("Error relaying: {}", e);
                 }
             }).unwrap();

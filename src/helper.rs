@@ -12,6 +12,10 @@ use get_if_addrs::{get_if_addrs, IfAddr};
 use tokio::net::TcpStream;
 use tokio::io::AsyncWriteExt;
 use std::error::Error;
+use tokio::sync::Mutex;
+use std::sync::Arc;
+use tokio_tungstenite::WebSocketStream;
+use tokio_tungstenite::MaybeTlsStream;
 
 
 pub async fn get_target_info(username: String) -> Option<Value> {
@@ -238,19 +242,17 @@ pub fn get_pip_port_json(username:&str, password:&str) -> serde_json::Value {
 }
 
 
-pub async fn send_json_value(json_value: &Value) -> tokio::io::Result<()>{
-    let url = Url::parse("ws://54.66.23.75:8765").unwrap();
+pub async fn send_json_value(json_value: &Value, ws_stream:Arc<Mutex<WebSocketStream<MaybeTlsStream<TcpStream>>>>) -> tokio::io::Result<()>{
     let json_str = serde_json::to_string(json_value)?;
-    let (mut ws_stream, _) = connect_async(url).await.unwrap();
+    let mut ws_stream = ws_stream.lock().await;
     ws_stream.send(Message::Text(json_str)).await.unwrap();
     Ok(())
 }
 
-pub async fn get_clients() -> Result<String, Box<dyn Error>> {
-    let url = Url::parse("ws://54.66.23.75:8765")?;
-    let (mut ws_stream, _) = connect_async(url).await?;
-
-    let json_str = r#"{"type": "get_users"}"#.to_string();
+pub async fn get_clients(ws_stream:Arc<Mutex<WebSocketStream<MaybeTlsStream<TcpStream>>>>) -> Result<String, Box<dyn Error>> {
+    let mut ws_stream = ws_stream.lock().await;
+    let json_val = json!({"type":"getusers"});
+    let json_str = serde_json::to_string(&json_val).unwrap();
     ws_stream.send(Message::Text(json_str)).await?;
 
     if let Some(msg) = ws_stream.next().await {
