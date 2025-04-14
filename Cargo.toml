@@ -60,3 +60,11 @@ path = "src/test2.rs"
 [[bin]]
 name = "test3"
 path = "src/test3.rs"
+
+[[bin]]
+name = "senderrelay"
+path = "src/senderrelay.rs"
+
+[[bin]]
+name = "recrelay"
+path = "src/recrelay.rs"
