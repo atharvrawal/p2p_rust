@@ -91,7 +91,7 @@ async fn main(){
             let app_weak = weak_app_target.clone();
             let ws_stream = ws_stream_clone_send.clone();
             slint::spawn_local(async move {
-                if let Err(e) = relay_receive(target_username.to_string(), ws_stream).await {
+                if let Err(e) = relay_send(ws_stream, target_username.to_string()).await {
                     eprintln!("Error relaying: {}", e);
                 }
             }).unwrap();

@@ -244,14 +244,16 @@ pub fn get_pip_port_json(username:&str, password:&str) -> serde_json::Value {
 
 pub async fn send_json_value(json_value: &Value, ws_stream:Arc<Mutex<WebSocketStream<MaybeTlsStream<TcpStream>>>>) -> tokio::io::Result<()>{
     let json_str = serde_json::to_string(json_value)?;
-    let mut ws_stream = ws_stream.lock().await;
-    ws_stream.send(Message::Text(json_str)).await.unwrap();
+    let mut guard = ws_stream.lock().await;
+    let (mut write, mut read) = StreamExt::split(&mut *guard);
+    write.send(Message::Text(json_str)).await.unwrap();
     Ok(())
 }
 
 pub async fn get_clients(ws_stream:Arc<Mutex<WebSocketStream<MaybeTlsStream<TcpStream>>>>) -> Result<String, Box<dyn Error>> {
     let mut ws_stream = ws_stream.lock().await;
-    let json_val = json!({"type":"getusers"});
+
+    let json_val = json!({"type":"request_peer"});
     let json_str = serde_json::to_string(&json_val).unwrap();
     ws_stream.send(Message::Text(json_str)).await?;
 
@@ -292,12 +294,10 @@ pub async fn get_clients(ws_stream:Arc<Mutex<WebSocketStream<MaybeTlsStream<TcpS
 
 pub fn keys_from_json_str(json_str: String) -> Vec<String>{
     let _json: Value = serde_json::from_str(json_str.as_str()).unwrap();
-    print!("{}",json_str);
-    let mut usernames: Vec<String> = Vec::new();
-    if let Value::Object(map) = _json {
-        for (key, value) in map.iter() {
-            usernames.push(key.clone());
-        }
-    }
-    usernames
+    let vec: Vec<String> = _json.as_array()
+        .expect("Expected a JSON array")
+        .iter()
+        .map(|v| v.as_str().unwrap().to_string())
+        .collect();
+    vec
 }
