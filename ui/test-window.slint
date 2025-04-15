@@ -13,7 +13,8 @@ export component TestWindow inherits Window {
     callback file_picker() -> string;
     callback register(string, string);
     callback get_clients();
-    callback send(string, string);
+    callback send(string);
+    callback recieve(string);
 
     property <string> file_name; property <string> username; property <string> pswd; property <string> target_username;
     
@@ -65,7 +66,7 @@ export component TestWindow inherits Window {
     
         
         Button {text: "File Picker"; clicked => {root.file_name = file_picker();}}
-        Button {text: "Send"; clicked => {send(username, target_username)}} 
+        Button {text: "Send"; clicked => {send(target_username)}} 
         Rectangle{ProgressIndicator {progress: 50%; width: parent.width; height: parent.height;} 
             Text {text: "50% Done"; horizontal-alignment: center; vertical-alignment: center; color: darkgreen;}
             max-height: 20px;}
@@ -81,6 +82,6 @@ export component TestWindow inherits Window {
             Button {icon: @image-url("back_icon.png"); row:0; col:0; clicked => {show_reciver_page = false; show_picker_page = true;}}
             Text { text: "Recieve File"; font-size: 48px; vertical-alignment: center; horizontal-alignment: center; row:0; col:0; colspan: 2; rowspan: 2;}
         }
-        Button {text: "Open port for reciving"; }
+        Button {text: "Open port for reciving"; clicked => {recieve(username);}}
     }
 }

@@ -1,30 +1,29 @@
-use std::process::Command;
-use get_if_addrs::get_if_addrs;
-use std::net::IpAddr;
+// file: receiver.rs
+use tokio::net::TcpListener;
+use tokio_tungstenite::accept_async;
+use futures::{StreamExt};
+use std::fs::File;
+use std::io::Write;
 
-fn get_ipv4_from_interface(name: &str) -> Option<String> {
-    for iface in get_if_addrs().ok()? {
-        if iface.name == name {
-            if let IpAddr::V4(ipv4) = iface.ip() {
-                return Some(ipv4.to_string());
-            }
+#[tokio::main]
+async fn main() {
+    let addr = "54.66.23.75:8765";
+    let listener = TcpListener::bind(&addr).await.expect("Can't listen");
+    println!("Receiver listening on {}", addr);
+
+    let (stream, _) = listener.accept().await.expect("Failed to accept");
+    let mut ws_stream = accept_async(stream).await.expect("Error during handshake");
+
+    let mut file = File::create("received_file").expect("Could not create file");
+
+    println!("Connection established. Receiving file...");
+
+    while let Some(msg) = ws_stream.next().await {
+        let msg = msg.expect("Failed to receive message");
+        if msg.is_binary() {
+            file.write_all(&msg.into_data()).expect("Failed to write to file");
         }
     }
-    None
-}
 
-fn main() {
-    let output = Command::new("ipconfig")
-        .output()
-        .expect("Failed to run ipconfig");
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut interface_name:&str;
-    for line in stdout.lines(){
-        if line.contains("WiFi") || line.contains("Wi-Fi"){
-            interface_name = line;
-            print!("{}", get_ipv4_from_interface(interface_name).unwrap());
-        }
-    }
-
+    println!("File received!");
 }

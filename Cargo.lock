@@ -3956,6 +3956,7 @@ dependencies = [
  "anyhow",
  "bincode",
  "crc16",
+ "futures",
  "futures-util",
  "get_if_addrs",
  "local-ip-address",

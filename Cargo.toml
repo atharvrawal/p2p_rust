@@ -23,6 +23,7 @@ url = "2.5.4"
 local-ip-address = "0.5"
 get_if_addrs = "0.5"
 pnet = "0.34.0"
+futures = "0.3"
 anyhow = "1"
 
 
@@ -96,3 +97,11 @@ path = "src/true_test.rs"
 [[bin]]
 name = "testtt"
 path = "src/testtt.rs"
+
+[[bin]]
+name = "initial_receiver"
+path = "src/initial_receiver.rs"
+
+[[bin]]
+name = "test_receiver"
+path = "src/test_receiver.rs"

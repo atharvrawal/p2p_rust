@@ -14,12 +14,14 @@ use helper::get_clients;
 use std::error::Error;
 use tokio::io::AsyncWriteExt;
 use tokio::io::AsyncReadExt;
-mod testtt;
-use testtt::relay_send;
+mod true_test;
+use true_test::relay_send;
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::protocol::Message;
 use tokio::sync::Mutex;
 use std::sync::Arc;
+mod test_receiver;
+use test_receiver::relay_receive;
 
 fn process_input_json(input: SharedString) {
     let input_str = input.as_str();
@@ -82,15 +84,30 @@ async fn main(){
         }).unwrap();
     });
 
-    // Send event handler
+    let ws_stream_clone_send = ws_stream.clone();
     let weak_app_target = app.as_weak();
     app.on_send(
-        move |username: SharedString, target_username: SharedString| {
+        move |target_username: SharedString| {
             let app_weak = weak_app_target.clone();
+            let ws_stream = ws_stream_clone_send.clone();
+            slint::spawn_local(async move {
+                if let Err(e) = relay_receive(target_username.to_string(), ws_stream).await {
+                    eprintln!("Error relaying: {}", e);
+                }
+            }).unwrap();
+        }
+    );
+
+    let ws_stream_clone_receive = ws_stream.clone();
+    let weak_app_target = app.as_weak();
+    app.on_recieve(
+        move |username: SharedString| {
+            let app_weak = weak_app_target.clone();
+            let ws_stream = ws_stream_clone_receive.clone();
             let username = username.to_string();
             slint::spawn_local(async move {
                 // Call relay_send asynchronously
-                if let Err(e) = relay_send(target_username.to_string(), username.to_string()).await {
+                if let Err(e) = relay_receive(username.to_string(), ws_stream).await {
                     eprintln!("Error relaying: {}", e);
                 }
             }).unwrap();
